@@ -4,7 +4,7 @@
 //#region Constants
 
 /** Versión de la app. Único lugar a actualizar al publicar cambios (la PWA se actualiza al cambiar esto). */
-const APP_VERSION = "1.1.4";
+const APP_VERSION = "1.2.1";
 const APP_LAST_UPDATE = "2026-05-16";
 
 /**
