@@ -18,6 +18,12 @@ const ID_INPUT_SALARY_PERCENTAGE = "inputSalaryPercentage";
 const ID_BTN_SAVE_SALARY_PERCENTAGE = "btnSaveSalaryPercentage";
 const ID_SALARY_PERCENTAGE_ERROR_FEEDBACK = "salaryPercentageErrorFeedback";
 
+const ID_INPUT_SALES_POINT = "inputSalesPoint";
+const ID_BTN_SAVE_SALES_POINT = "btnSaveSalesPoint";
+const ID_SALES_POINT_ERROR_FEEDBACK = "salesPointErrorFeedback";
+
+const STORAGE_KEY_SALES_POINT = "salesPoint";
+
 const ID_APP_VERSION_TEXT = "appVersionText";
 const ID_APP_VERSION_CONTAINER = "appVersionContainer";
 const ID_APP_LAST_UPDATE_TEXT = "appLastUpdateDateText";
@@ -57,9 +63,11 @@ async function onSettingsPageLoaded() {
   setupUnitsListeners();
   setupConceptsListeners();
   setupSalaryPercentageListener();
+  setupSalesPointListener();
 
   // Cargar porcentaje de salario actual
   loadSalaryPercentage();
+  loadSalesPoint();
 
   // Configurar la versión y la fecha de última actualización de la app
   setupAppVersion();
@@ -620,6 +628,109 @@ function setupSalaryPercentageListener() {
   if (!btnSave) return;
 
   btnSave.onclick = saveSalaryPercentage;
+}
+
+/**
+ * Configura el event listener para el punto de venta
+ * @returns {void}
+ */
+function setupSalesPointListener() {
+  const btnSave = document.getElementById(ID_BTN_SAVE_SALES_POINT);
+  if (!btnSave) return;
+
+  btnSave.onclick = saveSalesPoint;
+}
+
+/**
+ * Carga el punto de venta actual
+ * @returns {void}
+ */
+function loadSalesPoint() {
+  const input = document.getElementById(ID_INPUT_SALES_POINT);
+  if (!input) return;
+
+  input.value = getSalesPoint();
+}
+
+/**
+ * Guarda el punto de venta
+ * @returns {void}
+ */
+function saveSalesPoint() {
+  const input = document.getElementById(ID_INPUT_SALES_POINT);
+  if (!input) return;
+
+  clearSalesPointError();
+
+  const value = input.value.trim();
+  if (!value) {
+    setSalesPointError("Ingresá un nombre de punto de venta");
+    input.focus();
+    return;
+  }
+
+  if (value.length > 50) {
+    setSalesPointError("Máximo 50 caracteres");
+    input.focus();
+    return;
+  }
+
+  setData(STORAGE_KEY_SALES_POINT, value);
+}
+
+/**
+ * Muestra un error en el campo de punto de venta
+ * @param {string} message
+ * @returns {void}
+ */
+function setSalesPointError(message) {
+  const input = document.getElementById(ID_INPUT_SALES_POINT);
+  const feedback = document.getElementById(ID_SALES_POINT_ERROR_FEEDBACK);
+
+  if (input) input.classList.add("is-invalid");
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.style.display = "block";
+    feedback.classList.add("d-block");
+  }
+}
+
+/**
+ * Limpia el error del campo de punto de venta
+ * @returns {void}
+ */
+function clearSalesPointError() {
+  const input = document.getElementById(ID_INPUT_SALES_POINT);
+  const feedback = document.getElementById(ID_SALES_POINT_ERROR_FEEDBACK);
+
+  if (input) input.classList.remove("is-invalid");
+  if (feedback) {
+    feedback.textContent = "";
+    feedback.style.display = "none";
+    feedback.classList.remove("d-block");
+  }
+}
+
+/**
+ * Obtiene el punto de venta configurado
+ * @returns {string}
+ */
+function getSalesPoint() {
+  //const raw = localStorage.getItem(STORAGE_KEY_SALES_POINT);
+  const raw = getData(STORAGE_KEY_SALES_POINT);
+  
+  if (raw === null) return "";
+  return typeof raw === "string" ? raw.trim() : "";
+
+  /*try {
+    const parsed = JSON.parse(raw);
+    console.log("get Sales point: ", parsed)
+    return typeof parsed === "string" ? parsed.trim() : "";
+    
+  } catch (_) {
+    console.log("get Sales point: ", "error")
+    return "";
+  }*/
 }
 
 /**

@@ -73,6 +73,8 @@ const ID_REAL_SALARY = "realSalary";
 const ID_BTN_CLOSE_ACCOUNTING = "btnCloseAccounting";
 // id de botón de reabrir contabilidad
 const ID_BTN_REOPEN_ACCOUNTING = "btnReopenAccounting";
+// id de botón exportar contabilidad a CSV
+const ID_BTN_EXPORT_ACCOUNTING = "btnExportAccounting";
 
 //#endregion
 
@@ -127,9 +129,27 @@ async function onAccountingPageLoaded() {
   document.getElementById(ID_BTN_ADD_TRANSFER_SALES).onclick = () => openTransferSalesModal();
   document.getElementById(ID_BTN_CLOSE_ACCOUNTING).onclick = () => confirmCloseAccounting();
   document.getElementById(ID_BTN_REOPEN_ACCOUNTING).onclick = () => confirmReopenAccounting();
+  document.getElementById(ID_BTN_EXPORT_ACCOUNTING).onclick = () => exportCurrentAccountingToCsv();
 
   // Renderizar la contabilidad
   await renderAccounting();
+}
+
+/**
+ * Exporta la contabilidad del día visible a CSV
+ * @returns {void}
+ */
+function exportCurrentAccountingToCsv() {
+  if (!currentAccounting) {
+    showToast("No hay contabilidad cargada para exportar.", TOAST_COLORS.DANGER, 3);
+    return;
+  }
+
+  const products = getData(PAGE_PRODUCTS) || [];
+  const ok = exportAccountingToCsv(currentAccounting, products);
+  if (ok) {
+    showToast("Contabilidad exportada correctamente.", TOAST_COLORS.SUCCESS, 3);
+  }
 }
 
 
