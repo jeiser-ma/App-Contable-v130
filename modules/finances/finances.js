@@ -308,6 +308,7 @@ function recalculateFinanceTotals() {
 
 /**
  * Render cards de puntos de venta (filtradas por búsqueda)
+ * Incluye PV inactivos si ya tienen datos en la finanza del día
  * @returns {void}
  */
 function renderFinanceStoresSection() {
@@ -321,24 +322,45 @@ function renderFinanceStoresSection() {
 
   let entries = (currentFinance.stores || []).filter((entry) => {
     const store = byId.get(entry.storeId);
-    if (!store) return false;
-    if (store.active === false) return false;
+    // Sin catálogo: solo mostrar si hay montos (PV eliminado del todo)
+    if (!store) {
+      const amounts = entry.amounts || {};
+      const hasAmounts =
+        Number(amounts.CUP || 0) !== 0 ||
+        Number(amounts.USD || 0) !== 0 ||
+        Number(amounts.TRANSFER || 0) !== 0;
+      if (!hasAmounts) return false;
+      if (FINANCES_STATE.searchText) {
+        return entry.storeId.toLowerCase().includes(FINANCES_STATE.searchText.toLowerCase());
+      }
+      return true;
+    }
+
+    // Activos siempre; inactivos solo si ya están en esta finanza (histórico)
+    // (todos los de currentFinance.stores ya están "registrados" en el día)
     if (FINANCES_STATE.searchText) {
       return store.name.toLowerCase().includes(FINANCES_STATE.searchText.toLowerCase());
     }
     return true;
   });
 
-  // Orden por nombre
+  // Activos primero, luego inactivos; ambos por nombre
   entries = entries.sort((a, b) => {
-    const n1 = (byId.get(a.storeId)?.name || "").toLowerCase();
-    const n2 = (byId.get(b.storeId)?.name || "").toLowerCase();
+    const storeA = byId.get(a.storeId);
+    const storeB = byId.get(b.storeId);
+    const activeA = storeA ? storeA.active !== false : false;
+    const activeB = storeB ? storeB.active !== false : false;
+    if (activeA !== activeB) return activeA ? -1 : 1;
+    const n1 = (storeA?.name || a.storeId || "").toLowerCase();
+    const n2 = (storeB?.name || b.storeId || "").toLowerCase();
     return n1.localeCompare(n2);
   });
 
   if (alertNoStores) {
     const hasActive = catalog.some((s) => s.active !== false);
-    alertNoStores.classList.toggle("d-none", hasActive);
+    const hasListed = entries.length > 0;
+    // Solo alertar si no hay nada que mostrar y tampoco hay activos para agregar
+    alertNoStores.classList.toggle("d-none", hasActive || hasListed);
     const btnGo = document.getElementById(ID_BTN_GO_TO_STORES);
     if (btnGo) {
       btnGo.onclick = () => loadPage(PAGE_STORES);
@@ -359,9 +381,21 @@ function renderFinanceStoresSection() {
 
   entries.forEach((entry) => {
     const store = byId.get(entry.storeId);
+    const isInactive = store ? store.active === false : true;
     const node = template.content.cloneNode(true);
+
     const nameEl = node.querySelector(".finance-store-name");
-    if (nameEl) nameEl.textContent = store?.name || entry.storeId;
+    if (nameEl) {
+      nameEl.textContent = store?.name || "PV eliminado";
+      if (isInactive) nameEl.classList.add("text-muted");
+    }
+
+    const badgeEl = node.querySelector(".finance-store-inactive-badge");
+    if (badgeEl) {
+      badgeEl.classList.toggle("d-none", !isInactive);
+      if (!store) badgeEl.textContent = "Eliminado";
+      else badgeEl.textContent = "Inactivo";
+    }
 
     const cupEl = node.querySelector(".finance-store-cup");
     const usdEl = node.querySelector(".finance-store-usd");
@@ -450,6 +484,10 @@ function openFinanceAmountModal(target) {
  * Llena el select de puntos de venta activos
  * @returns {void}
  */
+/**
+ * Llena el select de puntos de venta: activos + inactivos ya presentes en la finanza
+ * @returns {void}
+ */
 function fillFinanceStoreSelect() {
   const select = document.getElementById(ID_FINANCE_AMOUNT_STORE);
   if (!select) return;
@@ -462,14 +500,33 @@ function fillFinanceStoreSelect() {
   placeholder.selected = true;
   select.appendChild(placeholder);
 
-  const catalog = (getData(PAGE_STORES) || [])
-    .filter((s) => s.active !== false)
-    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const catalog = getData(PAGE_STORES) || [];
+  const byId = new Map(catalog.map((s) => [s.id, s]));
+  const financeStoreIds = new Set((currentFinance?.stores || []).map((s) => s.storeId));
 
-  catalog.forEach((store) => {
+  const options = catalog
+    .filter((s) => s.active !== false || financeStoreIds.has(s.id))
+    .sort((a, b) => {
+      const activeA = a.active !== false;
+      const activeB = b.active !== false;
+      if (activeA !== activeB) return activeA ? -1 : 1;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+
+  options.forEach((store) => {
     const option = document.createElement("option");
     option.value = store.id;
-    option.textContent = store.name;
+    option.textContent =
+      store.active === false ? `${store.name} (Inactivo)` : store.name;
+    select.appendChild(option);
+  });
+
+  // PV eliminados del catálogo pero con datos en la finanza
+  (currentFinance?.stores || []).forEach((entry) => {
+    if (byId.has(entry.storeId)) return;
+    const option = document.createElement("option");
+    option.value = entry.storeId;
+    option.textContent = "PV eliminado";
     select.appendChild(option);
   });
 }
