@@ -1122,16 +1122,17 @@ function goToExpenses() {
 }
 
 // UTILIDADES
-/**
- * Obtiene la fecha de ayer en formato YYYY-MM-DD
- * @param {string} date - Fecha en formato YYYY-MM-DD
- * @returns {string} Fecha de ayer
- */
-function getYesterday(date) {
-  const d = new Date(date + "T00:00:00");
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
-}
+// /**
+//  * Obtiene la fecha de ayer en formato YYYY-MM-DD
+//  * @param {string} date - Fecha en formato YYYY-MM-DD
+//  * @returns {string} Fecha de ayer
+//  */
+// function getYesterday(date) {
+//   const d = new Date(date + "T00:00:00");
+//   d.setDate(d.getDate() - 1);
+//   return d.toISOString().split("T")[0];
+// }
+
 
 
 

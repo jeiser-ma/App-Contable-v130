@@ -209,52 +209,73 @@ function syncFinanceStores(finance) {
 }
 
 /**
- * Persiste currentFinance y actualiza totales generales del día siguiente si existe
+ * Persiste currentFinance y propaga totales generales a días posteriores
  * @returns {void}
  */
 function saveFinance() {
   if (!currentFinance) return;
   setDataById(PAGE_FINANCES, currentFinance);
-  refreshNextDayGeneralTotals(currentFinance.date);
+  refreshFutureGeneralTotals(currentFinance.date);
 }
 
 /**
- * Si existe finanza del día siguiente, recalcula su total general
- * @param {string} date - Fecha ISO del día recién guardado
+ * Suma dos objetos de totales por moneda (cup/usd/transfer)
+ * @param {Object} a
+ * @param {Object} b
+ * @returns {{cup:number,usd:number,transfer:number}}
+ */
+function addCurrencyTotals(a, b) {
+  const left = a || emptyCurrencyTotals();
+  const right = b || emptyCurrencyTotals();
+  return {
+    cup: roundTo2(Number(left.cup || 0) + Number(right.cup || 0)),
+    usd: roundTo2(Number(left.usd || 0) + Number(right.usd || 0)),
+    transfer: roundTo2(Number(left.transfer || 0) + Number(right.transfer || 0)),
+  };
+}
+
+/**
+ * Recalcula generalTotals de todos los días posteriores a fromDate
+ * Cadena: general(día) = general(día anterior) + daily(día)
+ * @param {string} fromDate - Fecha del día recién guardado
  * @returns {void}
  */
-function refreshNextDayGeneralTotals(date) {
-  if (!date) return;
-  const parts = date.split("-").map(Number);
-  if (parts.length !== 3) return;
-  const next = new Date(parts[0], parts[1] - 1, parts[2] + 1);
-  const nextDate = [
-    next.getFullYear(),
-    String(next.getMonth() + 1).padStart(2, "0"),
-    String(next.getDate()).padStart(2, "0"),
-  ].join("-");
+function refreshFutureGeneralTotals(fromDate) {
+  if (!fromDate) return;
 
   const all = getData(PAGE_FINANCES) || [];
-  const nextFinance = all.find((f) => f.date === nextDate);
-  if (!nextFinance) return;
+  const future = all
+    .filter((f) => f.date > fromDate)
+    .sort((a, b) => a.date.localeCompare(b.date));
 
-  const yDaily = currentFinance?.date === date
-    ? currentFinance.dailyTotals
-    : (all.find((f) => f.date === date)?.dailyTotals || emptyCurrencyTotals());
-  const nDaily = nextFinance.dailyTotals || emptyCurrencyTotals();
+  if (future.length === 0) return;
 
-  nextFinance.generalTotals = {
-    cup: roundTo2(Number(yDaily.cup || 0) + Number(nDaily.cup || 0)),
-    usd: roundTo2(Number(yDaily.usd || 0) + Number(nDaily.usd || 0)),
-    transfer: roundTo2(Number(yDaily.transfer || 0) + Number(nDaily.transfer || 0)),
-  };
-  setDataById(PAGE_FINANCES, nextFinance);
+  // Punto de partida: generalTotals del día guardado
+  let prevGeneral =
+    currentFinance?.date === fromDate
+      ? currentFinance.generalTotals
+      : all.find((f) => f.date === fromDate)?.generalTotals;
+  prevGeneral = prevGeneral || emptyCurrencyTotals();
+
+  future.forEach((finance) => {
+    const daily = finance.dailyTotals || emptyCurrencyTotals();
+    // Si hay hueco de fechas, usamos el general del último día recalculado
+    // (equivalente a sumar 0 en los días sin registro)
+    finance.generalTotals = addCurrencyTotals(prevGeneral, daily);
+    setDataById(PAGE_FINANCES, finance);
+    prevGeneral = finance.generalTotals;
+
+    // Si el usuario está viendo ese día, mantener memoria al día
+    if (currentFinance?.id === finance.id) {
+      currentFinance.generalTotals = finance.generalTotals;
+    }
+  });
 }
 
 /**
- * Recalcula dailyTotals y generalTotals
+ * Recalcula dailyTotals y generalTotals del día actual
  * daily = suma PV - salidas
- * general = daily(ayer) + daily(hoy)
+ * general = general(ayer) + daily(hoy)  → acumulado verdadero
  * @returns {void}
  */
 function recalculateFinanceTotals() {
@@ -273,16 +294,16 @@ function recalculateFinanceTotals() {
 
   currentFinance.dailyTotals = daily;
 
-  const yesterday = getYesterday(currentFinance.date);
+  // Acumulado: general del último día anterior con registro + daily de hoy
+  // (si no hay día previo, general = daily)
   const all = getData(PAGE_FINANCES) || [];
-  const yesterdayFinance = all.find((f) => f.date === yesterday);
-  const yDaily = yesterdayFinance?.dailyTotals || emptyCurrencyTotals();
+  const previousFinance = all
+    .filter((f) => f.date < currentFinance.date)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .pop();
+  const previousGeneral = previousFinance?.generalTotals || emptyCurrencyTotals();
 
-  currentFinance.generalTotals = {
-    cup: roundTo2(Number(yDaily.cup || 0) + Number(daily.cup || 0)),
-    usd: roundTo2(Number(yDaily.usd || 0) + Number(daily.usd || 0)),
-    transfer: roundTo2(Number(yDaily.transfer || 0) + Number(daily.transfer || 0)),
-  };
+  currentFinance.generalTotals = addCurrencyTotals(previousGeneral, daily);
 }
 
 /**

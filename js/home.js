@@ -235,11 +235,23 @@ async function navigateToProductsWithFilter(filterType) {
 }
 
 /**
+ * Formatea una Date a YYYY-MM-DD usando la zona horaria local
+ * @param {Date} d
+ * @returns {string}
+ */
+function formatLocalDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
  * Obtiene la fecha de hoy en formato YYYY-MM-DD
  * @returns {string} Fecha de hoy
  */
 function getToday() {
-  return new Date().toISOString().split("T")[0];
+  return formatLocalDate(new Date());
 }
 
 /**
@@ -250,8 +262,20 @@ function getToday() {
 function getYesterday(date) {
   const d = new Date(date + "T00:00:00");
   d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
+  return formatLocalDate(d);
 }
+
+/**
+ * Obtiene la fecha de mañana en formato YYYY-MM-DD
+ * @param {string} date - Fecha en formato YYYY-MM-DD
+ * @returns {string} Fecha de mañana
+ */
+function getTomorrow(date) {
+  const d = new Date(date + "T00:00:00");
+  d.setDate(d.getDate() + 1);
+  return formatLocalDate(d);
+}
+
 
 /**
  * Obtiene el porcentaje de salario desde settings
