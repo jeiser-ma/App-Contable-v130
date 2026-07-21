@@ -42,6 +42,8 @@ function updateModuleCounterFromData() {
     data = getData(PAGE_INVENTORY) || [];
   } else if (currentModule === PAGE_EXPENSES) {
     data = getData(PAGE_EXPENSES) || [];
+  } else if (currentModule === PAGE_STORES) {
+    data = getData(PAGE_STORES) || [];
   }
 
   // Por ahora mostrar total, luego se actualizará con el render

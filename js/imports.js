@@ -12,6 +12,8 @@ const IMPORT_STATE_KEYS = typeof APP_STATE_KEYS !== "undefined"
       "inventory",
       "expenses",
       "accounting",
+      "stores",
+      "finances",
       "units",
       "expenseConcepts",
       "salaryPercentage"

@@ -4,8 +4,8 @@
 //#region Constants
 
 /** Versión de la app. Único lugar a actualizar al publicar cambios (la PWA se actualiza al cambiar esto). */
-const APP_VERSION = "1.2.1";
-const APP_LAST_UPDATE = "2026-05-16";
+const APP_VERSION = "1.3.0";
+const APP_LAST_UPDATE = "2026-07-20";
 
 /**
  * Devuelve la versión de la app (por compatibilidad con código que usa getAppVersion().then(...)).
@@ -54,6 +54,8 @@ const PAGE_MOVEMENTS = "movements";
 const PAGE_INVENTORY = "inventory";
 const PAGE_EXPENSES = "expenses";
 const PAGE_ACCOUNTING = "accounting";
+const PAGE_STORES = "stores";
+const PAGE_FINANCES = "finances";
 
 
 // Configuración de las páginas (centralizada)
@@ -237,6 +239,54 @@ const PAGES_CONFIG = {
       }
     ]
   },
+  [PAGE_STORES]: {
+    title: "Puntos de Venta",
+    icon: "bi-shop",
+    navId: null,
+    isModule: true,
+    sortOptions: [
+      { value: "name", label: "Nombre" }
+    ],
+    chips: [
+      {
+        id: "chip-filter-store-active",
+        label: "Activos",
+        icon: "bi-check-circle",
+        color: "btn-outline-success",
+        value: "active",
+      },
+      {
+        id: "chip-filter-store-inactive",
+        label: "Inactivos",
+        icon: "bi-dash-circle",
+        color: "btn-outline-secondary",
+        value: "inactive",
+      }
+    ]
+  },
+  [PAGE_FINANCES]: {
+    title: "Finanzas",
+    icon: "bi-wallet2",
+    navId: null,
+    isModule: true,
+    sortOptions: [],
+    chips: [
+      {
+        id: "chip-filter-finances-yesterday",
+        label: "Ayer",
+        icon: "bi-calendar-event",
+        color: "btn-outline-primary",
+        value: "yesterday",
+      },
+      {
+        id: "chip-filter-finances-today",
+        label: "Hoy",
+        icon: "bi-calendar-event-fill",
+        color: "btn-outline-success",
+        value: "today",
+      }
+    ]
+  },
   [PAGE_SETTINGS]: {
     title: "Ajustes",
     icon: "bi-gear",
@@ -264,6 +314,8 @@ const MODAL_EXPENSES = "expenses-modal";
 const MODAL_INVENTORY = "inventory-modal";
 const MODAL_CASH_SALES = "cash-sales-modal";
 const MODAL_TRANSFER_SALES = "transfer-sales-modal";
+const MODAL_STORES = "stores-modal";
+const MODAL_FINANCES_AMOUNT = "finances-amount-modal";
 
 /**
  * @description: Configuración de los modales (centralizada)
@@ -342,6 +394,22 @@ const MODALS_CONFIG = {
     icon: "bi-credit-card",
     iconExtraClass: "text-success",
   },
+  [MODAL_STORES]: {
+    titleId: "storeTitle",
+    titleAdd: "Nuevo punto de venta",
+    titleEdit: "Editar punto de venta",
+    iconId: "storeIcon",
+    icon: "bi-shop",
+    iconExtraClass: "text-primary",
+  },
+  [MODAL_FINANCES_AMOUNT]: {
+    titleId: "financeAmountModalTitle",
+    titleAdd: "Agregar monto",
+    titleEdit: "Editar monto",
+    iconId: "financeAmountModalIcon",
+    icon: "bi-cash-coin",
+    iconExtraClass: "text-primary",
+  },
 };
 
 //#endregion
@@ -405,6 +473,8 @@ const ID_CONTEXT_MENU_PRODUCTS = "contextMenuProducts";
 const ID_CONTEXT_MENU_MOVEMENTS = "contextMenuMovements";
 const ID_CONTEXT_MENU_EXPENSES = "contextMenuExpenses";
 const ID_CONTEXT_MENU_INVENTORY = "contextMenuInventory";
+const ID_CONTEXT_MENU_STORES = "contextMenuStores";
+const ID_CONTEXT_MENU_FINANCES = "contextMenuFinances";
 const ID_CONTEXT_MENU_SETTINGS = "contextMenuSettings";
 
 /**
@@ -429,6 +499,14 @@ const CONTEXT_MENU_CONFIG = [
   {
     menuId: ID_CONTEXT_MENU_INVENTORY,
     page: PAGE_INVENTORY
+  },
+  {
+    menuId: ID_CONTEXT_MENU_STORES,
+    page: PAGE_STORES
+  },
+  {
+    menuId: ID_CONTEXT_MENU_FINANCES,
+    page: PAGE_FINANCES
   },
   {
     menuId: ID_CONTEXT_MENU_SETTINGS,

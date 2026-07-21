@@ -1,0 +1,45 @@
+
+{
+  "FINANCES_SCHEMA": "Esquema de gastos",
+  "id": "uuid",
+  "date": "2026-07-20",
+
+  "stores": [
+    {
+      "storeId": "store-1",
+      "amounts": {
+        "CUP": 50000,
+        "USD": 750,
+        "TRANSFER": 60500
+      }
+    },
+    {
+      "storeId": "store-2",
+      "amounts": {
+        "CUP": 100000,
+        "USD": 2000,
+        "TRANSFER": 220000
+      }
+    }
+  ],
+
+  "outputs": {
+    "cup": 8000,
+    "usd": 50,
+    "transfer": 20500
+  },
+
+  "dailyTotals": {
+    "cup": 142000,
+    "usd": 2700,
+    "transfer": 260000
+  },
+
+  "generalTotals": {
+    "cup": 1550000,
+    "usd": 72750,
+    "transfer": 990500
+  },
+
+  "createdAt": "timestamp"
+}

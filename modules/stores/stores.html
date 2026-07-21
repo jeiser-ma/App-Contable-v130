@@ -1,0 +1,47 @@
+<!-- Lista de puntos de venta -->
+<div id="storesList" class="d-grid gap-2">
+  <!-- items -->
+</div>
+
+<!-- TEMPLATE: Punto de venta -->
+<template id="storeCardTemplate">
+  <div class="card shadow-sm">
+    <div class="card-body py-1 px-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3 me-2">
+          <!-- Icono: verde = activo, gris = inactivo -->
+          <div
+            class="rounded-circle d-flex align-items-center justify-content-center store-icon-circle"
+            style="width: 36px; height: 36px"
+          >
+            <i class="bi bi-shop text-white"></i>
+          </div>
+
+          <!-- Info -->
+          <div class="flex-grow-1">
+            <div class="fw-semibold store-name"></div>
+            <div class="text-muted small store-status"></div>
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="d-flex gap-2">
+          <button
+            class="btn btn-warning rounded-circle btn-sm btn-edit-store"
+            type="button"
+            title="Editar"
+          >
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button
+            class="btn btn-danger rounded-circle btn-sm btn-delete-store"
+            type="button"
+            title="Eliminar"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

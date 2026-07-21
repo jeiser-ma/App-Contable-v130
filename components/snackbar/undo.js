@@ -111,6 +111,8 @@ function undoDelete() {
       renderInventory();
     } else if (UNDO_STATE.type === PAGE_EXPENSES && typeof renderExpenses === "function") {
       renderExpenses();
+    } else if (UNDO_STATE.type === PAGE_STORES && typeof renderStores === "function") {
+      renderStores();
     }
   }
 

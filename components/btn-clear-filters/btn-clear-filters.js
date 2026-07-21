@@ -124,7 +124,7 @@ async function clearDateFilter(moduleName) {
     // Limpiar filtro de fecha
     let dateValue = "";
     let filterValue = null;
-    if (moduleName === PAGE_INVENTORY || moduleName === PAGE_ACCOUNTING) {
+    if (moduleName === PAGE_INVENTORY || moduleName === PAGE_ACCOUNTING || moduleName === PAGE_FINANCES) {
       dateValue = getToday();
       filterValue = dateValue;
     }

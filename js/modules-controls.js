@@ -224,6 +224,8 @@ function getModuleState(moduleName) {
     "accounting": "ACCOUNTING_STATE",
     "products": "PRODUCTS_STATE",
     "movements": "MOVEMENTS_STATE",
+    "stores": "STORES_STATE",
+    "finances": "FINANCES_STATE",
   };
 
   const stateName = stateNameMap[moduleName];

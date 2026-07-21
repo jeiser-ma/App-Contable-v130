@@ -1,0 +1,7 @@
+{
+  "STORE_SCHEMA": "Esquema de puntos de venta",
+  "id": "uuid",
+  "name": "Paradero",
+  "active": true,
+  "createdAt": "timestamp"
+}

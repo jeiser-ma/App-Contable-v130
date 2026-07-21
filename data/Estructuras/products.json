@@ -6,5 +6,9 @@
   "um": "unidad de medida",
   "quantity": 10,
   "lowStockThreshold": 20,
-  "criticalStockThreshold": 10
+  "criticalStockThreshold": 10,
+  "codes": [
+    "7790895001234",
+    "7790895005678"
+  ]
 }

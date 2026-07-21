@@ -10,6 +10,8 @@ const APP_STATE_KEYS = [
   PAGE_INVENTORY,
   PAGE_EXPENSES,
   PAGE_ACCOUNTING,
+  PAGE_STORES,
+  PAGE_FINANCES,
   "units",
   "expenseConcepts",
   "salaryPercentage",
@@ -290,6 +292,70 @@ function exportAccountingToCsv(accounting) {
 
   const pvSegment = sanitizeSalesPointForFilename(salesPoint);
   const filename = `contabilidad-PV-${pvSegment}-${isoDate}.csv`;
+  downloadFile(lines.join("\n"), filename, "text/csv;charset=utf-8", true);
+  return true;
+}
+
+/**
+ * Exporta las finanzas diarias a CSV
+ * @param {Object} finance
+ * @param {Array<Object>} storesCatalog
+ * @returns {boolean}
+ */
+function exportFinancesToCsv(finance, storesCatalog) {
+  if (!finance) return false;
+
+  const isoDate = finance.date || new Date().toISOString().slice(0, 10);
+  const byId = new Map((storesCatalog || []).map((s) => [s.id, s]));
+
+  const storeHeaderMap = {
+    pv: "Punto de Venta",
+    cup: "CUP",
+    usd: "USD",
+    transfer: "TRANSF",
+  };
+  const storeColumns = Object.keys(storeHeaderMap);
+  const storeRows = (finance.stores || []).map((entry) => {
+    const store = byId.get(entry.storeId);
+    return {
+      pv: store?.name ?? entry.storeId,
+      cup: csvExportNumber(entry.amounts?.CUP),
+      usd: csvExportNumber(entry.amounts?.USD),
+      transfer: csvExportNumber(entry.amounts?.TRANSFER),
+    };
+  });
+  const storesCsv =
+    storeRows.length > 0
+      ? arrayToCsv(storeRows, { columns: storeColumns, headerMap: storeHeaderMap })
+      : csvHeadersOnly(storeHeaderMap);
+
+  const outputs = finance.outputs || {};
+  const daily = finance.dailyTotals || {};
+  const general = finance.generalTotals || {};
+
+  const lines = [
+    csvFixedRow(["Fecha", formatAccountingCsvDate(isoDate)]),
+    csvFixedRow([]),
+    csvFixedRow(["PUNTOS DE VENTA"]),
+    storesCsv,
+    csvFixedRow([]),
+    csvFixedRow(["SALIDAS"]),
+    csvFixedRow(["CUP", csvExportNumber(outputs.cup)]),
+    csvFixedRow(["USD", csvExportNumber(outputs.usd)]),
+    csvFixedRow(["TRANSF", csvExportNumber(outputs.transfer)]),
+    csvFixedRow([]),
+    csvFixedRow(["TOTAL DE HOY"]),
+    csvFixedRow(["CUP", csvExportNumber(daily.cup)]),
+    csvFixedRow(["USD", csvExportNumber(daily.usd)]),
+    csvFixedRow(["TRANSF", csvExportNumber(daily.transfer)]),
+    csvFixedRow([]),
+    csvFixedRow(["TOTAL GENERAL"]),
+    csvFixedRow(["CUP", csvExportNumber(general.cup)]),
+    csvFixedRow(["USD", csvExportNumber(general.usd)]),
+    csvFixedRow(["TRANSF", csvExportNumber(general.transfer)]),
+  ];
+
+  const filename = `finanzas-${isoDate}.csv`;
   downloadFile(lines.join("\n"), filename, "text/csv;charset=utf-8", true);
   return true;
 }

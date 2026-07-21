@@ -1,0 +1,64 @@
+<div class="modal fade" id="stores-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title d-flex align-items-center gap-2">
+          <i id="storeIcon" class="bi bi-shop text-primary"></i>
+          <span id="storeTitle">Nuevo punto de venta</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <form id="storeForm">
+          <!-- Nombre -->
+          <div class="mb-3">
+            <label for="storeName" class="form-label small">Nombre</label>
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              id="storeName"
+              placeholder="Ej: Paradero, 84, Calor III..."
+              maxlength="50"
+              autocomplete="off"
+            />
+            <div class="invalid-feedback">
+              Ingresá un nombre
+            </div>
+          </div>
+
+          <!-- Estado: Activo / Inactivo (mismo patrón que Entrada/Salida) -->
+          <div class="mb-2">
+            <label class="form-label small">Estado</label>
+            <div class="btn-group w-100 gap-4" role="group" id="storeStatusToggle">
+              <input type="radio" class="btn-check" name="storeStatus" id="storeStatusActive" value="true" checked />
+              <label class="btn btn-outline-success rounded-pill" for="storeStatusActive">
+                <i class="bi bi-check-circle"></i> Activo
+              </label>
+
+              <input type="radio" class="btn-check" name="storeStatus" id="storeStatusInactive" value="false" />
+              <label class="btn btn-outline-secondary rounded-pill" for="storeStatusInactive">
+                <i class="bi bi-dash-circle"></i> Inactivo
+              </label>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary rounded-pill btn-sm" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+
+        <button type="button" class="btn btn-primary rounded-pill btn-sm" id="btnConfirmStore">
+          Guardar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

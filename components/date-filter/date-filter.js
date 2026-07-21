@@ -50,7 +50,7 @@ async function linkDateAndChipsFilters(moduleName, controlName) {
   let moduleState = getModuleState(moduleName);
 
   // Verificar si el modulo es uno de los que tiene chips de fecha
-  const hasModuleChipsDate = [PAGE_ACCOUNTING, PAGE_INVENTORY, PAGE_EXPENSES].includes(moduleName);
+  const hasModuleChipsDate = [PAGE_ACCOUNTING, PAGE_INVENTORY, PAGE_EXPENSES, PAGE_FINANCES].includes(moduleName);
   // Validar que sea un modulo con chips de fecha
   if (hasModuleChipsDate) {
 
