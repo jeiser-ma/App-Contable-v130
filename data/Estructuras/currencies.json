@@ -1,0 +1,6 @@
+{
+  "CURRENCIES_SCHEMA": "Catálogo global de monedas (Ajustes). Array de códigos en mayúsculas.",
+  "example": ["CUP", "USD", "EUR"],
+  "defaults": ["CUP", "USD"],
+  "storageKey": "currencies"
+}

@@ -9,6 +9,11 @@ const ID_BTN_ADD_UNIT = "btnAddUnit";
 const ID_UNITS_LIST = "unitsList";
 const ID_UNIT_ERROR_FEEDBACK = "unitErrorFeedback";
 
+const ID_INPUT_NEW_CURRENCY = "inputNewCurrency";
+const ID_BTN_ADD_CURRENCY = "btnAddCurrency";
+const ID_CURRENCIES_LIST = "currenciesList";
+const ID_CURRENCY_ERROR_FEEDBACK = "currencyErrorFeedback";
+
 const ID_INPUT_NEW_CONCEPT = "inputNewConcept";
 const ID_BTN_ADD_CONCEPT = "btnAddConcept";
 const ID_CONCEPTS_LIST = "conceptsList";
@@ -21,8 +26,6 @@ const ID_SALARY_PERCENTAGE_ERROR_FEEDBACK = "salaryPercentageErrorFeedback";
 const ID_INPUT_SALES_POINT = "inputSalesPoint";
 const ID_BTN_SAVE_SALES_POINT = "btnSaveSalesPoint";
 const ID_SALES_POINT_ERROR_FEEDBACK = "salesPointErrorFeedback";
-
-const STORAGE_KEY_SALES_POINT = "salesPoint";
 
 const ID_APP_VERSION_TEXT = "appVersionText";
 const ID_APP_VERSION_CONTAINER = "appVersionContainer";
@@ -40,6 +43,7 @@ const OPERATIONAL_STATE_KEYS = [
   PAGE_EXPENSES,
   PAGE_ACCOUNTING,
   PAGE_FINANCES,
+  STG_KEYS.STOCK,
 ];
 //#endregion
 
@@ -56,12 +60,15 @@ async function onSettingsPageLoaded() {
   // Asegurar que el componente badge esté cargado antes de renderizar chips
   if (!document.getElementById(ID_BADGE_TEMPLATE)) await loadComponent("badge");
 
-  // Renderizar unidades de medida y conceptos
+  // Renderizar unidades, monedas y conceptos
+  ensureCurrenciesDefaults();
   renderUnits();
+  renderCurrencies();
   renderConcepts();
 
   // Configurar event listeners
   setupUnitsListeners();
+  setupCurrenciesListeners();
   setupConceptsListeners();
   setupSalaryPercentageListener();
   setupSalesPointListener();
@@ -227,6 +234,23 @@ function setupUnitsListeners() {
 }
 
 /**
+ * Configura los event listeners para la gestión de monedas
+ * @returns {void}
+ */
+function setupCurrenciesListeners() {
+  const input = document.getElementById(ID_INPUT_NEW_CURRENCY);
+  const btnAdd = document.getElementById(ID_BTN_ADD_CURRENCY);
+
+  if (!input || !btnAdd) return;
+
+  input.oninput = () => clearCurrencyError();
+  btnAdd.onclick = () => addCurrency();
+  input.onkeypress = (e) => {
+    if (e.key === "Enter") addCurrency();
+  };
+}
+
+/**
  * Configura los event listeners para la gestión de conceptos de gastos
  * @returns {void}
  */
@@ -264,7 +288,7 @@ function addUnit() {
     return;
   }
 
-  const units = getData("units") || [];
+  const units = getData(STG_KEYS.UNITS) || [];
 
   // Limpiar error previo
   clearUnitError();
@@ -278,12 +302,256 @@ function addUnit() {
 
   // Agregar
   units.push(value);
-  setData("units", units);
+  setData(STG_KEYS.UNITS, units);
 
   // Limpiar input y renderizar
   input.value = "";
   renderUnits();
   input.focus();
+}
+
+/**
+ * Normaliza un código de moneda (trim + mayúsculas)
+ * @param {string} value
+ * @returns {string}
+ */
+function normalizeCurrencyCode(value) {
+  return (value || "").trim().toUpperCase();
+}
+
+/**
+ * Inicializa monedas por defecto si no existen o la lista está vacía
+ * @returns {void}
+ */
+function ensureCurrenciesDefaults() {
+  if (typeof initCurrencies === "function") {
+    initCurrencies();
+    return;
+  }
+  const list = getData(STG_KEYS.CURRENCIES);
+  if (!Array.isArray(list) || list.length === 0) {
+    setData(STG_KEYS.CURRENCIES, [...DEFAULT_CURRENCIES]);
+  }
+}
+
+/**
+ * Obtiene el catálogo de monedas (con defaults si hace falta)
+ * @returns {Array<string>}
+ */
+function getCurrencies() {
+  ensureCurrenciesDefaults();
+  const list = getData(STG_KEYS.CURRENCIES);
+  return Array.isArray(list) ? list : [...DEFAULT_CURRENCIES];
+}
+
+/**
+ * Agrega una nueva moneda al catálogo
+ * @returns {void}
+ */
+function addCurrency() {
+  const input = document.getElementById(ID_INPUT_NEW_CURRENCY);
+  if (!input) return;
+
+  clearCurrencyError();
+
+  const value = normalizeCurrencyCode(input.value);
+  if (!value) {
+    input.focus();
+    return;
+  }
+
+  if (!/^[A-Z]{2,10}$/.test(value)) {
+    setCurrencyError("Usá un código de 2 a 10 letras (ej. CUP, USD, EUR)");
+    input.focus();
+    return;
+  }
+
+  const currencies = getCurrencies();
+  if (currencies.some((c) => c === value)) {
+    setCurrencyError("Esta moneda ya existe");
+    input.focus();
+    return;
+  }
+
+  currencies.push(value);
+  setData(STG_KEYS.CURRENCIES, currencies);
+
+  input.value = "";
+  renderCurrencies();
+  input.focus();
+}
+
+/**
+ * Renderiza la lista de monedas como chips
+ * @returns {void}
+ */
+function renderCurrencies() {
+  const container = document.getElementById(ID_CURRENCIES_LIST);
+  if (!container) return;
+
+  const currencies = getCurrencies();
+  container.innerHTML = "";
+
+  currencies.forEach((currency, index) => {
+    const chip = createCurrencyChip(currency, index);
+    if (chip) container.appendChild(chip);
+  });
+}
+
+/**
+ * Crea un chip para una moneda
+ * @param {string} currency
+ * @param {number} index
+ * @returns {HTMLElement|null}
+ */
+function createCurrencyChip(currency, index) {
+  return createBadge({
+    text: currency,
+    colorClass: "bg-primary",
+    showCloseButton: true,
+    btnCloseWhite: true,
+    onClose: () => deleteCurrency(index),
+  });
+}
+
+/**
+ * Indica si una moneda está en uso (stock.prices, products.prices o finanzas)
+ * @param {string} currencyCode
+ * @returns {boolean}
+ */
+function isCurrencyInUse(currencyCode) {
+  const code = normalizeCurrencyCode(currencyCode);
+  if (!code) return false;
+
+  const stockList = getData(STG_KEYS.STOCK) || [];
+  if (
+    Array.isArray(stockList) &&
+    stockList.some(
+      (s) => s.prices && Object.prototype.hasOwnProperty.call(s.prices, code)
+    )
+  ) {
+    return true;
+  }
+
+  const products = getData(PAGE_PRODUCTS) || [];
+  if (
+    products.some(
+      (p) => p.prices && Object.prototype.hasOwnProperty.call(p.prices, code)
+    )
+  ) {
+    return true;
+  }
+
+  // Finanzas: en uso si hay montos distintos de cero en esa moneda
+  const financeKey = code.toLowerCase();
+  const finances = getData(PAGE_FINANCES) || [];
+  if (
+    finances.some((f) => {
+      const outs = f.outputs || {};
+      const daily = f.dailyTotals || {};
+      const general = f.generalTotals || {};
+      if (Number(outs[financeKey] || 0) !== 0) return true;
+      if (Number(daily[financeKey] || 0) !== 0) return true;
+      if (Number(general[financeKey] || 0) !== 0) return true;
+      return (f.stores || []).some(
+        (s) => Number(s.amounts?.[code] || 0) !== 0
+      );
+    })
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Elimina una moneda (con validación de uso)
+ * @param {number} index
+ * @returns {void}
+ */
+function deleteCurrency(index) {
+  clearUnitError();
+  clearCurrencyError();
+  clearConceptError();
+
+  const currencies = getCurrencies();
+  if (index < 0 || index >= currencies.length) return;
+
+  const currency = currencies[index];
+
+  if (isCurrencyInUse(currency)) {
+    setCurrencyError("No se puede eliminar: esta moneda está en uso");
+    return;
+  }
+
+  openConfirmDeleteModal("currency", index, currency);
+}
+
+/**
+ * Confirma la eliminación de una moneda
+ * @returns {void}
+ */
+function confirmDeleteCurrency() {
+  if (DELETE_STATE.id === null || DELETE_STATE.id === undefined) return;
+
+  const currencies = getCurrencies();
+  const index = DELETE_STATE.id;
+  if (index < 0 || index >= currencies.length) return;
+
+  const deleted = currencies[index];
+
+  if (isCurrencyInUse(deleted)) {
+    setCurrencyError("No se puede eliminar: esta moneda está en uso");
+    hideConfirmModal();
+    return;
+  }
+
+  UNDO_STATE.data = deleted;
+  UNDO_STATE.type = STG_KEYS.CURRENCIES;
+  UNDO_STATE.index = index;
+
+  currencies.splice(index, 1);
+  setData(STG_KEYS.CURRENCIES, currencies);
+
+  DELETE_STATE.type = null;
+  DELETE_STATE.id = null;
+
+  hideConfirmModal();
+  renderCurrencies();
+  showSnackbar("Moneda eliminada");
+}
+
+/**
+ * Muestra un error en el campo de moneda
+ * @param {string} message
+ * @returns {void}
+ */
+function setCurrencyError(message) {
+  const input = document.getElementById(ID_INPUT_NEW_CURRENCY);
+  const feedback = document.getElementById(ID_CURRENCY_ERROR_FEEDBACK);
+
+  if (input) input.classList.add("is-invalid");
+  if (feedback) {
+    feedback.textContent = message;
+    feedback.style.display = "block";
+    feedback.classList.add("d-block");
+  }
+}
+
+/**
+ * Limpia el error del campo de moneda
+ * @returns {void}
+ */
+function clearCurrencyError() {
+  const input = document.getElementById(ID_INPUT_NEW_CURRENCY);
+  const feedback = document.getElementById(ID_CURRENCY_ERROR_FEEDBACK);
+
+  if (input) input.classList.remove("is-invalid");
+  if (feedback) {
+    feedback.textContent = "";
+    feedback.style.display = "none";
+    feedback.classList.remove("d-block");
+  }
 }
 
 /**
@@ -300,7 +568,7 @@ function addConcept() {
     return;
   }
 
-  const concepts = getData("expenseConcepts") || [];
+  const concepts = getData(STG_KEYS.EXPENSE_CONCEPTS) || [];
 
   // Limpiar error previo
   clearConceptError();
@@ -314,7 +582,7 @@ function addConcept() {
 
   // Agregar
   concepts.push(value);
-  setData("expenseConcepts", concepts);
+  setData(STG_KEYS.EXPENSE_CONCEPTS, concepts);
 
   // Limpiar input y renderizar
   input.value = "";
@@ -330,7 +598,7 @@ function renderUnits() {
   const container = document.getElementById(ID_UNITS_LIST);
   if (!container) return;
 
-  const units = getData("units") || [];
+  const units = getData(STG_KEYS.UNITS) || [];
   container.innerHTML = "";
 
   units.forEach((unit, index) => {
@@ -347,7 +615,7 @@ function renderConcepts() {
   const container = document.getElementById(ID_CONCEPTS_LIST);
   if (!container) return;
 
-  const concepts = getData("expenseConcepts") || [];
+  const concepts = getData(STG_KEYS.EXPENSE_CONCEPTS) || [];
   container.innerHTML = "";
 
   concepts.forEach((concept, index) => {
@@ -396,9 +664,10 @@ function createConceptChip(concept, index) {
 function deleteUnit(index) {
   // Limpiar errores previos
   clearUnitError();
+  clearCurrencyError();
   clearConceptError();
 
-  const units = getData("units") || [];
+  const units = getData(STG_KEYS.UNITS) || [];
   if (index < 0 || index >= units.length) return;
 
   const unit = units[index];
@@ -424,15 +693,16 @@ function deleteUnit(index) {
 function deleteConcept(index) {
   // Limpiar errores previos
   clearUnitError();
+  clearCurrencyError();
   clearConceptError();
 
-  const concepts = getData("expenseConcepts") || [];
+  const concepts = getData(STG_KEYS.EXPENSE_CONCEPTS) || [];
   if (index < 0 || index >= concepts.length) return;
 
   const concept = concepts[index];
 
   // Verificar si está en uso en gastos
-  const expenses = getData("expenses") || [];
+  const expenses = getData(STG_KEYS.EXPENSES) || [];
   const isInUse = expenses.some(e => e.concept && e.concept.toLowerCase() === concept.toLowerCase());
 
   if (isInUse) {
@@ -451,7 +721,7 @@ function deleteConcept(index) {
 function confirmDeleteUnit() {
   if (DELETE_STATE.id === null || DELETE_STATE.id === undefined) return;
 
-  const units = getData("units") || [];
+  const units = getData(STG_KEYS.UNITS) || [];
   const index = DELETE_STATE.id;
 
   if (index < 0 || index >= units.length) return;
@@ -470,12 +740,12 @@ function confirmDeleteUnit() {
 
   // Guardar estado para undo
   UNDO_STATE.data = deleted;
-  UNDO_STATE.type = "units";
+  UNDO_STATE.type = STG_KEYS.UNITS;
   UNDO_STATE.index = index;
 
   // Eliminar
   units.splice(index, 1);
-  setData("units", units);
+  setData(STG_KEYS.UNITS, units);
 
   DELETE_STATE.type = null;
   DELETE_STATE.id = null;
@@ -492,7 +762,7 @@ function confirmDeleteUnit() {
 function confirmDeleteConcept() {
   if (DELETE_STATE.id === null || DELETE_STATE.id === undefined) return;
 
-  const concepts = getData("expenseConcepts") || [];
+  const concepts = getData(STG_KEYS.EXPENSE_CONCEPTS) || [];
   const index = DELETE_STATE.id;
 
   if (index < 0 || index >= concepts.length) return;
@@ -500,7 +770,7 @@ function confirmDeleteConcept() {
   const deleted = concepts[index];
 
   // Verificar nuevamente si está en uso
-  const expenses = getData("expenses") || [];
+  const expenses = getData(STG_KEYS.EXPENSES) || [];
   const isInUse = expenses.some(e => e.concept && e.concept.toLowerCase() === deleted.toLowerCase());
 
   if (isInUse) {
@@ -511,12 +781,12 @@ function confirmDeleteConcept() {
 
   // Guardar estado para undo
   UNDO_STATE.data = deleted;
-  UNDO_STATE.type = "expenseConcepts";
+  UNDO_STATE.type = STG_KEYS.EXPENSE_CONCEPTS;
   UNDO_STATE.index = index;
 
   // Eliminar
   concepts.splice(index, 1);
-  setData("expenseConcepts", concepts);
+  setData(STG_KEYS.EXPENSE_CONCEPTS, concepts);
 
   DELETE_STATE.type = null;
   DELETE_STATE.id = null;
@@ -531,7 +801,7 @@ function confirmDeleteConcept() {
  * @returns {Array<string>} Lista de unidades de medida
  */
 function getUnits() {
-  return getData("units") || [];
+  return getData(STG_KEYS.UNITS) || [];
 }
 
 /**
@@ -539,7 +809,7 @@ function getUnits() {
  * @returns {Array<string>} Lista de conceptos de gastos
  */
 function getExpenseConcepts() {
-  return getData("expenseConcepts") || [];
+  return getData(STG_KEYS.EXPENSE_CONCEPTS) || [];
 }
 
 /**
@@ -676,7 +946,7 @@ function saveSalesPoint() {
     return;
   }
 
-  setData(STORAGE_KEY_SALES_POINT, value);
+  setData(STG_KEYS.SALES_POINT, value);
 }
 
 /**
@@ -717,8 +987,8 @@ function clearSalesPointError() {
  * @returns {string}
  */
 function getSalesPoint() {
-  //const raw = localStorage.getItem(STORAGE_KEY_SALES_POINT);
-  const raw = getData(STORAGE_KEY_SALES_POINT);
+  //const raw = localStorage.getItem(STG_KEYS.SALES_POINT);
+  const raw = getData(STG_KEYS.SALES_POINT);
   
   if (raw === null) return "";
   return typeof raw === "string" ? raw.trim() : "";
@@ -742,7 +1012,7 @@ function loadSalaryPercentage() {
   const input = document.getElementById(ID_INPUT_SALARY_PERCENTAGE);
   if (!input) return;
 
-  const percentage = getData("salaryPercentage");
+  const percentage = getData(STG_KEYS.SALARY_PERCENTAGE);
   input.value = percentage !== null && percentage !== undefined ? percentage : 1.7;
 }
 
@@ -764,7 +1034,7 @@ function saveSalaryPercentage() {
     return;
   }
 
-  setData("salaryPercentage", value);
+  setData(STG_KEYS.SALARY_PERCENTAGE, value);
   // No mostrar snackbar, es un valor simple de modificar
 }
 
@@ -812,7 +1082,7 @@ function clearSalaryPercentageError() {
  * @returns {number} Porcentaje de salario (default: 1.7)
  */
 function getSalaryPercentage() {
-  const percentage = getData("salaryPercentage");
+  const percentage = getData(STG_KEYS.SALARY_PERCENTAGE);
   return percentage !== null && percentage !== undefined ? percentage : 1.7;
 }
 

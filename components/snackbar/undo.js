@@ -82,7 +82,7 @@ function undoDelete() {
   if (!UNDO_STATE.data || !UNDO_STATE.type) return;
 
   // Manejar unidades de medida y conceptos de gastos (tienen índice)
-  if (UNDO_STATE.type === "units" || UNDO_STATE.type === "expenseConcepts") {
+  if (UNDO_STATE.type === STG_KEYS.UNITS || UNDO_STATE.type === STG_KEYS.EXPENSE_CONCEPTS || UNDO_STATE.type === STG_KEYS.CURRENCIES) {
     const data = getData(UNDO_STATE.type);
     const index = UNDO_STATE.index !== undefined ? UNDO_STATE.index : data.length;
     
@@ -91,10 +91,12 @@ function undoDelete() {
     setData(UNDO_STATE.type, data);
     
     // Renderizar
-    if (UNDO_STATE.type === "units" && typeof renderUnits === "function") {
+    if (UNDO_STATE.type === STG_KEYS.UNITS && typeof renderUnits === "function") {
       renderUnits();
-    } else if (UNDO_STATE.type === "expenseConcepts" && typeof renderConcepts === "function") {
+    } else if (UNDO_STATE.type === STG_KEYS.EXPENSE_CONCEPTS && typeof renderConcepts === "function") {
       renderConcepts();
+    } else if (UNDO_STATE.type === STG_KEYS.CURRENCIES && typeof renderCurrencies === "function") {
+      renderCurrencies();
     }
   } else {
     // Manejar otros tipos (productos, movimientos, etc.)

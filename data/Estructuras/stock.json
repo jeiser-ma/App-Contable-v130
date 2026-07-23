@@ -1,0 +1,15 @@
+{
+    "STOCK_SCHEMA": "Esquema de stock y datos del producto por punto de venta. Único por storeId + productId",
+    "id": "uuid",
+    "storeId": "uuid-del-punto-de-venta",
+    "productId": "uuid-del-producto",
+    "um": "u",
+    "quantity": 100,
+    "lowStockThreshold": 20,
+    "criticalStockThreshold": 10,
+    "prices": {
+      "CUP": 300,
+      "USD": 2.5
+    },
+    "createdAt": "timestamp"
+  }

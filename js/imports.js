@@ -7,16 +7,19 @@
 const IMPORT_STATE_KEYS = typeof APP_STATE_KEYS !== "undefined"
   ? APP_STATE_KEYS
   : [
-      "products",
-      "movements",
-      "inventory",
-      "expenses",
-      "accounting",
-      "stores",
-      "finances",
-      "units",
-      "expenseConcepts",
-      "salaryPercentage"
+      STG_KEYS.PRODUCTS,
+      STG_KEYS.MOVEMENTS,
+      STG_KEYS.INVENTORY,
+      STG_KEYS.EXPENSES,
+      STG_KEYS.ACCOUNTING,
+      STG_KEYS.STORES,
+      STG_KEYS.FINANCES,
+      STG_KEYS.STOCK,
+      STG_KEYS.UNITS,
+      STG_KEYS.CURRENCIES,
+      STG_KEYS.EXPENSE_CONCEPTS,
+      STG_KEYS.SALARY_PERCENTAGE,
+      STG_KEYS.SALES_POINT,
     ];
 
 /**

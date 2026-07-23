@@ -4,7 +4,7 @@
 //#region Constants
 
 /** Versión de la app. Único lugar a actualizar al publicar cambios (la PWA se actualiza al cambiar esto). */
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.3.1";
 const APP_LAST_UPDATE = "2026-07-20";
 
 /**
@@ -39,6 +39,9 @@ const MOVEMENTS_TYPES = {
   OUT: "OUT", // Salida
 };
 
+/** Catálogo de monedas (valores por defecto) */
+const DEFAULT_CURRENCIES = ["CUP", "USD"];
+
 //#endregion
 
 
@@ -46,16 +49,16 @@ const MOVEMENTS_TYPES = {
 //#region PAGES CONFIGS
 //==============================================
 
-// Nombres de las páginas / modulos 
+// Nombres de las páginas / módulos (alineados a STG_KEYS cuando hay storage)
 const PAGE_HOME = "home";
 const PAGE_SETTINGS = "settings";
-const PAGE_PRODUCTS = "products";
-const PAGE_MOVEMENTS = "movements";
-const PAGE_INVENTORY = "inventory";
-const PAGE_EXPENSES = "expenses";
-const PAGE_ACCOUNTING = "accounting";
-const PAGE_STORES = "stores";
-const PAGE_FINANCES = "finances";
+const PAGE_PRODUCTS = STG_KEYS.PRODUCTS;
+const PAGE_MOVEMENTS = STG_KEYS.MOVEMENTS;
+const PAGE_INVENTORY = STG_KEYS.INVENTORY;
+const PAGE_EXPENSES = STG_KEYS.EXPENSES;
+const PAGE_ACCOUNTING = STG_KEYS.ACCOUNTING;
+const PAGE_STORES = STG_KEYS.STORES;
+const PAGE_FINANCES = STG_KEYS.FINANCES;
 
 
 // Configuración de las páginas (centralizada)

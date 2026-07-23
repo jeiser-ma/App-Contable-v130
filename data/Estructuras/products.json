@@ -1,14 +1,10 @@
 {
-  "PRODUCT_SCHEMA": "Esquema de productos",
+  "PRODUCT_SCHEMA": "Esquema de productos (catálogo global)",
   "id": "uuid",
   "name": "nombre del producto",
-  "price": 10.0,
-  "um": "unidad de medida",
-  "quantity": 10,
-  "lowStockThreshold": 20,
-  "criticalStockThreshold": 10,
   "codes": [
     "7790895001234",
     "7790895005678"
-  ]
+  ],
+  "createdAt": "timestamp"
 }

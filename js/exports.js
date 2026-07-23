@@ -4,18 +4,21 @@
  */
 
 // Claves de localStorage que forman el estado completo de la app
+// (derivadas de STG_KEYS; sin credentials / logged)
 const APP_STATE_KEYS = [
-  PAGE_PRODUCTS,
-  PAGE_MOVEMENTS,
-  PAGE_INVENTORY,
-  PAGE_EXPENSES,
-  PAGE_ACCOUNTING,
-  PAGE_STORES,
-  PAGE_FINANCES,
-  "units",
-  "expenseConcepts",
-  "salaryPercentage",
-  "salesPoint"
+  STG_KEYS.PRODUCTS,
+  STG_KEYS.MOVEMENTS,
+  STG_KEYS.INVENTORY,
+  STG_KEYS.EXPENSES,
+  STG_KEYS.ACCOUNTING,
+  STG_KEYS.STORES,
+  STG_KEYS.FINANCES,
+  STG_KEYS.STOCK,
+  STG_KEYS.UNITS,
+  STG_KEYS.CURRENCIES,
+  STG_KEYS.EXPENSE_CONCEPTS,
+  STG_KEYS.SALARY_PERCENTAGE,
+  STG_KEYS.SALES_POINT,
 ];
 
 // ==============================================
@@ -297,7 +300,20 @@ function exportAccountingToCsv(accounting) {
 }
 
 /**
- * Exporta las finanzas diarias a CSV
+ * Formatea fecha ISO (yyyy-mm-dd) a dd-mm-yy (ej. 21-07-26)
+ * @param {string} isoDate
+ * @returns {string}
+ */
+function formatFinancesCsvDate(isoDate) {
+  if (!isoDate) return "";
+  const parts = isoDate.split("-");
+  if (parts.length !== 3) return isoDate;
+  const [year, month, day] = parts;
+  return `${day}-${month}-${year.slice(-2)}`;
+}
+
+/**
+ * Exporta las finanzas diarias a CSV (formato horizontal por sección)
  * @param {Object} finance
  * @param {Array<Object>} storesCatalog
  * @returns {boolean}
@@ -307,52 +323,68 @@ function exportFinancesToCsv(finance, storesCatalog) {
 
   const isoDate = finance.date || new Date().toISOString().slice(0, 10);
   const byId = new Map((storesCatalog || []).map((s) => [s.id, s]));
+  const cols = 4;
+  const separator = csvFixedRow(
+    ["__________", "__________", "__________", "__________"],
+    cols
+  );
 
-  const storeHeaderMap = {
-    pv: "Punto de Venta",
-    cup: "CUP",
-    usd: "USD",
-    transfer: "TRANSF",
-  };
-  const storeColumns = Object.keys(storeHeaderMap);
-  const storeRows = (finance.stores || []).map((entry) => {
-    const store = byId.get(entry.storeId);
-    return {
-      pv: store?.name ?? entry.storeId,
-      cup: csvExportNumber(entry.amounts?.CUP),
-      usd: csvExportNumber(entry.amounts?.USD),
-      transfer: csvExportNumber(entry.amounts?.TRANSFER),
-    };
-  });
-  const storesCsv =
-    storeRows.length > 0
-      ? arrayToCsv(storeRows, { columns: storeColumns, headerMap: storeHeaderMap })
-      : csvHeadersOnly(storeHeaderMap);
+  const storeRows = (finance.stores || [])
+    .map((entry) => {
+      const store = byId.get(entry.storeId);
+      return {
+        name: store?.name ?? "PV eliminado",
+        active: store ? store.active !== false : false,
+        cup: csvExportNumber(entry.amounts?.CUP),
+        usd: csvExportNumber(entry.amounts?.USD),
+        transfer: csvExportNumber(entry.amounts?.TRANSFER),
+      };
+    })
+    .sort((a, b) => {
+      if (a.active !== b.active) return a.active ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    })
+    .map((row) => csvFixedRow([row.name, row.cup, row.usd, row.transfer], cols));
 
   const outputs = finance.outputs || {};
   const daily = finance.dailyTotals || {};
   const general = finance.generalTotals || {};
 
   const lines = [
-    csvFixedRow(["Fecha", formatAccountingCsvDate(isoDate)]),
-    csvFixedRow([]),
-    csvFixedRow(["PUNTOS DE VENTA"]),
-    storesCsv,
-    csvFixedRow([]),
-    csvFixedRow(["SALIDAS"]),
-    csvFixedRow(["CUP", csvExportNumber(outputs.cup)]),
-    csvFixedRow(["USD", csvExportNumber(outputs.usd)]),
-    csvFixedRow(["TRANSF", csvExportNumber(outputs.transfer)]),
-    csvFixedRow([]),
-    csvFixedRow(["TOTAL DE HOY"]),
-    csvFixedRow(["CUP", csvExportNumber(daily.cup)]),
-    csvFixedRow(["USD", csvExportNumber(daily.usd)]),
-    csvFixedRow(["TRANSF", csvExportNumber(daily.transfer)]),
-    csvFixedRow([]),
-    csvFixedRow(["TOTAL GENERAL"]),
-    csvFixedRow(["CUP", csvExportNumber(general.cup)]),
-    csvFixedRow(["USD", csvExportNumber(general.usd)]),
-    csvFixedRow(["TRANSF", csvExportNumber(general.transfer)]),
+    csvFixedRow(["FINANZAS", formatFinancesCsvDate(isoDate)], cols),
+    csvFixedRow([], cols),
+    csvFixedRow(["PUNTOS DE VENTA", "-- CUP --", "-- USD --", "-- TRANSF --"], cols),
+    ...storeRows,
+    separator,
+    csvFixedRow(
+      [
+        "SALIDAS",
+        csvExportNumber(outputs.cup),
+        csvExportNumber(outputs.usd),
+        csvExportNumber(outputs.transfer),
+      ],
+      cols
+    ),
+    separator,
+    csvFixedRow(
+      [
+        "TOTAL DEL DÍA",
+        csvExportNumber(daily.cup),
+        csvExportNumber(daily.usd),
+        csvExportNumber(daily.transfer),
+      ],
+      cols
+    ),
+    separator,
+    csvFixedRow(
+      [
+        "TOTAL GENERAL",
+        csvExportNumber(general.cup),
+        csvExportNumber(general.usd),
+        csvExportNumber(general.transfer),
+      ],
+      cols
+    ),
   ];
 
   const filename = `finanzas-${isoDate}.csv`;

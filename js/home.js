@@ -287,7 +287,7 @@ function getSalaryPercentage() {
     return window.getSalaryPercentage();
   }
   // Si no está disponible, leer usando getData
-  const percentage = getData("salaryPercentage");
+  const percentage = getData(STG_KEYS.SALARY_PERCENTAGE);
   return percentage !== null && percentage !== undefined ? percentage : 1.7;
 }
 
@@ -300,7 +300,7 @@ function updateAccountingSummary() {
   const yesterday = getYesterday(today);
 
   // Obtener datos
-  const allAccounting = getData("accounting") || [];
+  const allAccounting = getData(STG_KEYS.ACCOUNTING) || [];
   let accounting = allAccounting.find(a => a.date === today);
 
   // Si no existe, crear uno nuevo

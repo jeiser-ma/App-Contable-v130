@@ -314,7 +314,7 @@ function confirmDeleteExpense() {
 
   // Guardar estado para undo
   UNDO_STATE.data = deleted;
-  UNDO_STATE.type = "expenses";
+  UNDO_STATE.type = STG_KEYS.EXPENSES;
 
   const updated = expenses.filter((e) => e.id !== DELETE_STATE.id);
   setData(PAGE_EXPENSES, updated);
