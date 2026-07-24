@@ -98,6 +98,11 @@ function undoDelete() {
     } else if (UNDO_STATE.type === STG_KEYS.CURRENCIES && typeof renderCurrencies === "function") {
       renderCurrencies();
     }
+  } else if (
+    (UNDO_STATE.type === "finance-inputs" || UNDO_STATE.type === "finance-outputs") &&
+    typeof undoFinanceFlowDelete === "function"
+  ) {
+    undoFinanceFlowDelete(UNDO_STATE.type, UNDO_STATE.data, UNDO_STATE.index);
   } else {
     // Manejar otros tipos (productos, movimientos, etc.)
     const data = getData(UNDO_STATE.type);

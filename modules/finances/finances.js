@@ -34,6 +34,10 @@ const ID_BTN_CONFIRM_FINANCE_AMOUNT = "btnConfirmFinanceAmount";
 const FINANCE_TARGET_STORE = "store";
 const FINANCE_TARGET_INPUTS = "inputs";
 const FINANCE_TARGET_OUTPUTS = "outputs";
+
+/** Tipos de undo para ítems de flujo (no confundir con PAGE_FINANCES del día) */
+const FINANCE_UNDO_INPUTS = "finance-inputs";
+const FINANCE_UNDO_OUTPUTS = "finance-outputs";
 //#endregion
 
 const FINANCES_STATE = {
@@ -1168,7 +1172,7 @@ function saveFinanceAmountFromModal() {
 }
 
 /**
- * Elimina una entrada o salida
+ * Elimina una entrada o salida (con undo vía snackbar)
  * @param {"inputs"|"outputs"} target
  * @param {string} itemId
  * @returns {void}
@@ -1177,8 +1181,19 @@ function deleteFinanceFlowItem(target, itemId) {
   if (!currentFinance || !itemId) return;
   const listKey = target === FINANCE_TARGET_INPUTS ? "inputs" : "outputs";
   const list = currentFinance[listKey] || [];
-  const deleted = list.find((x) => x.id === itemId);
-  if (!deleted) return;
+  const index = list.findIndex((x) => x.id === itemId);
+  if (index < 0) return;
+
+  const deleted = list[index];
+
+  if (typeof UNDO_STATE !== "undefined") {
+    UNDO_STATE.data = deleted;
+    UNDO_STATE.type =
+      target === FINANCE_TARGET_INPUTS
+        ? FINANCE_UNDO_INPUTS
+        : FINANCE_UNDO_OUTPUTS;
+    UNDO_STATE.index = index;
+  }
 
   currentFinance[listKey] = list.filter((x) => x.id !== itemId);
   recalculateFinanceTotals();
@@ -1186,8 +1201,36 @@ function deleteFinanceFlowItem(target, itemId) {
   renderFinances();
 
   if (typeof showSnackbar === "function") {
-    showSnackbar(target === FINANCE_TARGET_INPUTS ? "Entrada eliminada" : "Salida eliminada");
+    showSnackbar(
+      target === FINANCE_TARGET_INPUTS ? "Entrada eliminada" : "Salida eliminada"
+    );
   }
+}
+
+/**
+ * Restaura una entrada/salida eliminada (llamado desde undoDelete)
+ * @param {"finance-inputs"|"finance-outputs"} undoType
+ * @param {Object} item
+ * @param {number} [index]
+ * @returns {void}
+ */
+function undoFinanceFlowDelete(undoType, item, index) {
+  if (!currentFinance || !item) return;
+  const listKey =
+    undoType === FINANCE_UNDO_INPUTS ? "inputs" : "outputs";
+  if (!Array.isArray(currentFinance[listKey])) {
+    currentFinance[listKey] = [];
+  }
+
+  const insertAt =
+    typeof index === "number" && index >= 0
+      ? Math.min(index, currentFinance[listKey].length)
+      : currentFinance[listKey].length;
+
+  currentFinance[listKey].splice(insertAt, 0, item);
+  recalculateFinanceTotals();
+  saveFinance();
+  renderFinances();
 }
 
 /**
