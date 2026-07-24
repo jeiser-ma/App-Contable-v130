@@ -1,6 +1,5 @@
-
 {
-  "FINANCES_SCHEMA": "Esquema de gastos",
+  "FINANCES_SCHEMA": "Finanzas diarias. Monedas UPPERCASE (catálogo STG_KEYS.CURRENCIES).",
   "id": "uuid",
   "date": "2026-07-20",
 
@@ -9,37 +8,49 @@
       "storeId": "store-1",
       "amounts": {
         "CUP": 50000,
-        "USD": 750,
-        "TRANSFER": 60500
-      }
-    },
-    {
-      "storeId": "store-2",
-      "amounts": {
-        "CUP": 100000,
-        "USD": 2000,
-        "TRANSFER": 220000
+        "USD": 750
       }
     }
   ],
 
-  "outputs": {
-    "cup": 8000,
-    "usd": 50,
-    "transfer": 20500
-  },
+  "inputs": [
+    {
+      "id": "uuid",
+      "currency": "CUP",
+      "amount": 1000,
+      "note": "Aporte de capital"
+    }
+  ],
+
+  "outputs": [
+    {
+      "id": "uuid",
+      "currency": "CUP",
+      "amount": 8000,
+      "note": "Pago de alquiler"
+    },
+    {
+      "id": "uuid",
+      "currency": "CUP",
+      "amount": 500,
+      "note": "Compra de insumos"
+    }
+  ],
 
   "dailyTotals": {
-    "cup": 142000,
-    "usd": 2700,
-    "transfer": 260000
+    "CUP": 42500,
+    "USD": 750
   },
 
   "generalTotals": {
-    "cup": 1550000,
-    "usd": 72750,
-    "transfer": 990500
+    "CUP": 1550000,
+    "USD": 72750
   },
 
-  "createdAt": "timestamp"
+  "createdAt": "timestamp",
+  "formulas": {
+    "dailyTotals.CUP": "SUM(stores.amounts.CUP) + SUM(inputs.CUP) - SUM(outputs.CUP)",
+    "generalTotals.CUP": "dailyTotals.CUP + generalTotals(yesterday).CUP"
+  },
+  "notes": "inputs/outputs son listas (varias por moneda). Migración: outputs legado mapa { CUP: n | {amount,note} } → lista. Solo se persisten montos > 0 en amounts y en ítems de flujo."
 }

@@ -1,6 +1,7 @@
 {
-  "CURRENCIES_SCHEMA": "Catálogo global de monedas (Ajustes). Array de códigos en mayúsculas.",
-  "example": ["CUP", "USD", "EUR"],
+  "CURRENCIES_SCHEMA": "Catálogo global de monedas (Ajustes). Array de códigos en mayúsculas. Usado por precios/stock y por Finanzas (modal y columnas).",
+  "example": ["CUP", "USD", "EUR", "TRANSFER"],
   "defaults": ["CUP", "USD"],
-  "storageKey": "currencies"
+  "storageKey": "currencies",
+  "notes": "TRANSFER u otras 'pseudo-monedas' se agregan aquí si se usan en Finanzas. Para transferencias por moneda: TRANSFER USD, TRANSFER CUP, etc."
 }

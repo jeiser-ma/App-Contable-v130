@@ -442,20 +442,38 @@ function isCurrencyInUse(currencyCode) {
     return true;
   }
 
-  // Finanzas: en uso si hay montos distintos de cero en esa moneda
-  const financeKey = code.toLowerCase();
+  // Finanzas: en uso si hay montos ≠ 0 (maps o listas inputs/outputs)
   const finances = getData(PAGE_FINANCES) || [];
+  const financeMapHasAmount = (map) => {
+    if (!map || typeof map !== "object" || Array.isArray(map)) return false;
+    const amountOf = (raw) => {
+      if (raw == null) return 0;
+      if (typeof raw === "object") return Number(raw.amount ?? 0) || 0;
+      return Number(raw) || 0;
+    };
+    if (amountOf(map[code]) !== 0) return true;
+    return Object.keys(map).some(
+      (k) =>
+        String(k).trim().toUpperCase() === code && amountOf(map[k]) !== 0
+    );
+  };
+  const financeFlowListHasAmount = (list) =>
+    Array.isArray(list) &&
+    list.some(
+      (item) =>
+        String(item?.currency || "").trim().toUpperCase() === code &&
+        Number(item?.amount || 0) !== 0
+    );
+
   if (
     finances.some((f) => {
-      const outs = f.outputs || {};
-      const daily = f.dailyTotals || {};
-      const general = f.generalTotals || {};
-      if (Number(outs[financeKey] || 0) !== 0) return true;
-      if (Number(daily[financeKey] || 0) !== 0) return true;
-      if (Number(general[financeKey] || 0) !== 0) return true;
-      return (f.stores || []).some(
-        (s) => Number(s.amounts?.[code] || 0) !== 0
-      );
+      if (financeFlowListHasAmount(f.inputs)) return true;
+      if (financeFlowListHasAmount(f.outputs)) return true;
+      // Legado: outputs como mapa
+      if (!Array.isArray(f.outputs) && financeMapHasAmount(f.outputs)) return true;
+      if (financeMapHasAmount(f.dailyTotals)) return true;
+      if (financeMapHasAmount(f.generalTotals)) return true;
+      return (f.stores || []).some((s) => financeMapHasAmount(s.amounts));
     })
   ) {
     return true;

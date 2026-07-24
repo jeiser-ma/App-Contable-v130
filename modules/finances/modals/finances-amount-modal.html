@@ -11,13 +11,15 @@
 
       <div class="modal-body">
         <form id="financeAmountForm">
-          <!-- Contexto fijo para Salidas -->
-          <div id="financeAmountOutputsContext" class="mb-3 p-2 border rounded bg-light d-none">
-            <div class="fw-semibold">Salidas</div>
-            <div class="small text-muted">Seleccioná la moneda y la cantidad</div>
+          <!-- Contexto Entradas / Salidas -->
+          <div id="financeAmountFlowContext" class="mb-3 p-2 border rounded bg-light d-none">
+            <div class="fw-semibold" id="financeAmountFlowTitle">Salidas</div>
+            <div class="small text-muted" id="financeAmountFlowHint">
+              Agregá moneda, monto y concepto
+            </div>
           </div>
 
-          <!-- Select PV (solo para sección Puntos de Venta) -->
+          <!-- Select PV (solo Puntos de Venta) -->
           <div class="mb-2" id="financeAmountStoreGroup">
             <label for="financeAmountStore" class="form-label small">Punto de venta</label>
             <select class="form-select form-select-sm" id="financeAmountStore">
@@ -31,9 +33,6 @@
             <label for="financeAmountCurrency" class="form-label small">Moneda</label>
             <select class="form-select form-select-sm" id="financeAmountCurrency">
               <option value="" selected disabled>Seleccioná una moneda...</option>
-              <option value="CUP">CUP</option>
-              <option value="USD">USD</option>
-              <option value="TRANSFER">TRANS</option>
             </select>
             <div class="invalid-feedback">Seleccioná una moneda</div>
           </div>
@@ -50,6 +49,17 @@
               step="0.01"
             />
             <div class="invalid-feedback">Ingresá una cantidad válida</div>
+          </div>
+
+          <!-- Concepto / observación (Entradas y Salidas) -->
+          <div class="mb-2 d-none" id="financeAmountNoteGroup">
+            <label for="financeAmountNote" class="form-label small">Concepto / observación</label>
+            <textarea
+              class="form-control form-control-sm"
+              id="financeAmountNote"
+              rows="2"
+              placeholder="Opcional"
+            ></textarea>
           </div>
         </form>
       </div>

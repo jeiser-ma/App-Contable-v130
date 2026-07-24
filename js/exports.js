@@ -313,21 +313,95 @@ function formatFinancesCsvDate(isoDate) {
 }
 
 /**
- * Exporta las finanzas diarias a CSV (formato horizontal por sección)
+ * Lee monto de finanzas por moneda (keys UPPERCASE; tolera casing viejo)
+ * @param {Object} map
+ * @param {string} currency
+ * @returns {number}
+ */
+function getFinanceCsvAmount(map, currency) {
+  const code = String(currency || "").trim().toUpperCase();
+  if (!map || !code) return 0;
+  const raw = Object.prototype.hasOwnProperty.call(map, code)
+    ? map[code]
+    : map[
+        Object.keys(map).find((k) => String(k).trim().toUpperCase() === code)
+      ];
+  if (raw == null) return 0;
+  if (typeof raw === "object") return Number(raw.amount ?? 0) || 0;
+  return Number(raw) || 0;
+}
+
+/**
+ * Agrupa ítems de entrada/salida por concepto (note) en filas pivoteadas por moneda
+ * @param {Array} list
+ * @param {string[]} currencyList
+ * @returns {Array<{label:string, amounts:number[]}>}
+ */
+function buildFinanceCsvFlowPivotRows(list, currencyList) {
+  const items = Array.isArray(list) ? list : [];
+  const groups = new Map();
+
+  items.forEach((item) => {
+    const currency = String(item?.currency || "").trim().toUpperCase();
+    const amount = Number(item?.amount || 0) || 0;
+    if (!currency || amount === 0) return;
+
+    const label = String(item?.note || "").trim() || "(sin concepto)";
+    const key = label.toLowerCase();
+    if (!groups.has(key)) {
+      groups.set(key, {
+        label,
+        amounts: Object.fromEntries(currencyList.map((c) => [c, 0])),
+      });
+    }
+    const group = groups.get(key);
+    if (Object.prototype.hasOwnProperty.call(group.amounts, currency)) {
+      group.amounts[currency] = Math.round((group.amounts[currency] + amount) * 100) / 100;
+    }
+  });
+
+  return Array.from(groups.values())
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .map((g) => ({
+      label: g.label,
+      amounts: currencyList.map((c) => g.amounts[c] || 0),
+    }));
+}
+
+/**
+ * Exporta las finanzas diarias a CSV (formato horizontal del ejemplo de negocio)
  * @param {Object} finance
  * @param {Array<Object>} storesCatalog
+ * @param {string[]} [currencies]
  * @returns {boolean}
  */
-function exportFinancesToCsv(finance, storesCatalog) {
+function exportFinancesToCsv(finance, storesCatalog, currencies) {
   if (!finance) return false;
+
+  let currencyList = Array.isArray(currencies) ? currencies.slice() : [];
+  if (currencyList.length === 0) {
+    if (typeof getFinanceDisplayCurrencies === "function") {
+      currencyList = getFinanceDisplayCurrencies(finance);
+    } else if (typeof getCurrencies === "function") {
+      currencyList = getCurrencies();
+    } else {
+      currencyList = ["CUP", "USD"];
+    }
+  }
+  currencyList = [
+    ...new Set(
+      currencyList
+        .map((c) => String(c || "").trim().toUpperCase())
+        .filter(Boolean)
+    ),
+  ];
 
   const isoDate = finance.date || new Date().toISOString().slice(0, 10);
   const byId = new Map((storesCatalog || []).map((s) => [s.id, s]));
-  const cols = 4;
-  const separator = csvFixedRow(
-    ["__________", "__________", "__________", "__________"],
-    cols
-  );
+  const cols = 1 + Math.max(currencyList.length, 1);
+  const emptyRow = csvFixedRow([], cols);
+  const sectionBars = currencyList.map(() => "════════");
+  const headerCurrencies = currencyList.map((c) => `-- ${c} --`);
 
   const storeRows = (finance.stores || [])
     .map((entry) => {
@@ -335,56 +409,60 @@ function exportFinancesToCsv(finance, storesCatalog) {
       return {
         name: store?.name ?? "PV eliminado",
         active: store ? store.active !== false : false,
-        cup: csvExportNumber(entry.amounts?.CUP),
-        usd: csvExportNumber(entry.amounts?.USD),
-        transfer: csvExportNumber(entry.amounts?.TRANSFER),
+        amounts: currencyList.map((c) =>
+          csvExportNumber(getFinanceCsvAmount(entry.amounts, c))
+        ),
       };
     })
     .sort((a, b) => {
       if (a.active !== b.active) return a.active ? -1 : 1;
       return a.name.localeCompare(b.name);
     })
-    .map((row) => csvFixedRow([row.name, row.cup, row.usd, row.transfer], cols));
+    .map((row) => csvFixedRow([row.name, ...row.amounts], cols));
 
-  const outputs = finance.outputs || {};
+  const flowSection = (list, sectionTitle) => {
+    const pivotRows = buildFinanceCsvFlowPivotRows(list, currencyList);
+    const rows = [csvFixedRow([sectionTitle, ...sectionBars], cols)];
+    if (pivotRows.length === 0) {
+      rows.push(
+        csvFixedRow(
+          ["(sin registros)", ...currencyList.map(() => csvExportNumber(0))],
+          cols
+        )
+      );
+    } else {
+      pivotRows.forEach((row) => {
+        rows.push(
+          csvFixedRow(
+            [row.label, ...row.amounts.map((n) => csvExportNumber(n))],
+            cols
+          )
+        );
+      });
+    }
+    return rows;
+  };
+
   const daily = finance.dailyTotals || {};
   const general = finance.generalTotals || {};
+  const amountCells = (map) =>
+    currencyList.map((c) => csvExportNumber(getFinanceCsvAmount(map, c)));
 
   const lines = [
     csvFixedRow(["FINANZAS", formatFinancesCsvDate(isoDate)], cols),
-    csvFixedRow([], cols),
-    csvFixedRow(["PUNTOS DE VENTA", "-- CUP --", "-- USD --", "-- TRANSF --"], cols),
+    emptyRow,
+    csvFixedRow(["", ...headerCurrencies], cols),
+    csvFixedRow(["PUNTOS DE VENTA", ...sectionBars], cols),
     ...storeRows,
-    separator,
-    csvFixedRow(
-      [
-        "SALIDAS",
-        csvExportNumber(outputs.cup),
-        csvExportNumber(outputs.usd),
-        csvExportNumber(outputs.transfer),
-      ],
-      cols
-    ),
-    separator,
-    csvFixedRow(
-      [
-        "TOTAL DEL DÍA",
-        csvExportNumber(daily.cup),
-        csvExportNumber(daily.usd),
-        csvExportNumber(daily.transfer),
-      ],
-      cols
-    ),
-    separator,
-    csvFixedRow(
-      [
-        "TOTAL GENERAL",
-        csvExportNumber(general.cup),
-        csvExportNumber(general.usd),
-        csvExportNumber(general.transfer),
-      ],
-      cols
-    ),
+    emptyRow,
+    ...flowSection(finance.outputs, "SALIDAS"),
+    emptyRow,
+    ...flowSection(finance.inputs, "ENTRADAS"),
+    emptyRow,
+    csvFixedRow(["TOTAL DEL DÍA", ...sectionBars], cols),
+    csvFixedRow(["", ...amountCells(daily)], cols),
+    csvFixedRow(["TOTAL GENERAL", ...sectionBars], cols),
+    csvFixedRow(["", ...amountCells(general)], cols),
   ];
 
   const filename = `finanzas-${isoDate}.csv`;

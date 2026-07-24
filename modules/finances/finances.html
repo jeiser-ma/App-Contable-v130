@@ -14,7 +14,6 @@
         </button>
       </div>
 
-      <!-- TEMPLATE: Card de PV (estilo contabilidad: nombre + montos) -->
       <template id="financeStoreCardTemplate">
         <div class="card shadow-sm">
           <div class="card-body py-2 px-3">
@@ -22,22 +21,8 @@
               <span class="fw-semibold finance-store-name">PV name</span>
               <span class="badge text-bg-secondary finance-store-inactive-badge d-none">Inactivo</span>
             </div>
-            <div class="d-flex flex-wrap gap-3 pt-1 small text-muted fw-semibold">
-              <div>
-                <i class="bi bi-cash-stack text-primary"></i>
-                CUP
-                <span class="finance-store-cup">0.00</span>
-              </div>
-              <div>
-                <i class="bi bi-currency-dollar text-success"></i>
-                USD
-                <span class="finance-store-usd">0.00</span>
-              </div>
-              <div>
-                <i class="bi bi-credit-card text-info"></i>
-                TRANS
-                <span class="finance-store-transfer">0.00</span>
-              </div>
+            <div class="d-flex flex-wrap gap-3 pt-1 small text-muted fw-semibold finance-store-amounts">
+              <!-- Montos por moneda -->
             </div>
           </div>
         </div>
@@ -55,46 +40,32 @@
     </div>
   </div>
 
-  <!-- Sección: Salidas (estilo gastos) -->
+  <!-- Sección: Entradas -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-success text-white">
+      <h6 class="mb-0"><i class="bi bi-box-arrow-in-down"></i> Entradas</h6>
+    </div>
+    <div class="card-body">
+      <div id="financeInputsList" class="d-grid gap-2">
+        <!-- Ítems de entrada -->
+      </div>
+
+      <div class="mt-3">
+        <button class="btn btn-success w-100 rounded-pill" id="btnAddInputsAmount" type="button">
+          <i class="bi bi-plus"></i> Agregar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Salidas -->
   <div class="card shadow-sm">
     <div class="card-header bg-danger text-white">
       <h6 class="mb-0"><i class="bi bi-box-arrow-up"></i> Salidas</h6>
     </div>
     <div class="card-body">
-      <div class="d-grid gap-2">
-        <div class="card shadow-sm">
-          <div class="card-body py-2 px-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-cash-stack text-danger"></i>
-                <span class="fw-semibold">CUP</span>
-              </div>
-              <span class="text-danger fw-semibold" id="financeOutputsCup">0.00</span>
-            </div>
-          </div>
-        </div>
-        <div class="card shadow-sm">
-          <div class="card-body py-2 px-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-currency-dollar text-danger"></i>
-                <span class="fw-semibold">USD</span>
-              </div>
-              <span class="text-danger fw-semibold" id="financeOutputsUsd">0.00</span>
-            </div>
-          </div>
-        </div>
-        <div class="card shadow-sm">
-          <div class="card-body py-2 px-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-credit-card text-danger"></i>
-                <span class="fw-semibold">TRANS</span>
-              </div>
-              <span class="text-danger fw-semibold" id="financeOutputsTransfer">0.00</span>
-            </div>
-          </div>
-        </div>
+      <div id="financeOutputsList" class="d-grid gap-2">
+        <!-- Ítems de salida -->
       </div>
 
       <div class="mt-3">
@@ -107,22 +78,11 @@
 
   <!-- Sección: Total de hoy -->
   <div class="card shadow-sm">
-    <div class="card-header bg-success text-white">
+    <div class="card-header bg-info text-white">
       <h6 class="mb-0"><i class="bi bi-calendar-check"></i> Total de hoy</h6>
     </div>
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span><i class="bi bi-cash-stack text-primary"></i> CUP</span>
-        <span class="fw-semibold text-primary" id="financeDailyCup">0</span>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span><i class="bi bi-currency-dollar text-success"></i> USD</span>
-        <span class="fw-semibold text-success" id="financeDailyUsd">0</span>
-      </div>
-      <div class="d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-credit-card text-info"></i> TRANS</span>
-        <span class="fw-semibold text-info" id="financeDailyTransfer">0</span>
-      </div>
+    <div class="card-body" id="financeDailyList">
+      <!-- Totales diarios por moneda -->
     </div>
   </div>
 
@@ -131,19 +91,8 @@
     <div class="card-header bg-warning text-dark">
       <h6 class="mb-0"><i class="bi bi-bar-chart"></i> Total General</h6>
     </div>
-    <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span><i class="bi bi-cash-stack text-primary"></i> CUP</span>
-        <span class="fw-semibold text-primary" id="financeGeneralCup">0</span>
-      </div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span><i class="bi bi-currency-dollar text-success"></i> USD</span>
-        <span class="fw-semibold text-success" id="financeGeneralUsd">0</span>
-      </div>
-      <div class="d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-credit-card text-info"></i> TRANS</span>
-        <span class="fw-semibold text-info" id="financeGeneralTransfer">0</span>
-      </div>
+    <div class="card-body" id="financeGeneralList">
+      <!-- Totales generales por moneda -->
     </div>
   </div>
 
